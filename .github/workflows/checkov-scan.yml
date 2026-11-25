@@ -32,7 +32,7 @@ jobs:
           directory: terraform/
           framework: terraform
           output_format: cli, sarif
-          output_file_path: console, results.sarif
+          output_file_path: console,results.sarif
           soft_fail: true
           continue-on-error: true
 
@@ -43,7 +43,7 @@ jobs:
           directory: kubernetes/
           framework: kubernetes
           output_format: cli, sarif
-          output_file_path: console, checkov-k8s.sarif
+          output_file_path: console,k8s-results.sarif
           soft_fail: true
           continue-on-error: true
 
@@ -54,15 +54,15 @@ jobs:
           directory: dockerfile/
           framework: dockerfile
           output_format: cli, sarif
-          output_file_path: console, checkov-dockerfile.sarif
+          output_file_path: console,dockerfile-results.sarif
           soft_fail: true
           continue-on-error: true
 
       - name: "Upload SARIF ke GitHub Security tab"
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
-          sarif_file: results.sarif
+          sarif_file: terraform/results.sarif
           category: "checkov-terraform"
 
       - name: "Block pipeline jika ditemukan pelanggaran di Terraform"
