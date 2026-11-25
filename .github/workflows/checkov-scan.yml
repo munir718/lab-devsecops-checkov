@@ -1,3 +1,4 @@
+
 name: "IaC Security Scan dengan Checkov"
 
 on:
@@ -21,6 +22,7 @@ jobs:
   checkov-scan:
     name: "Checkov Security Scan"
     runs-on: ubuntu-latest
+
     steps:
       - name: "Checkout repository"
         uses: actions/checkout@v4
@@ -28,51 +30,65 @@ jobs:
       - name: "Run Checkov Terraform"
         id: checkov-terraform
         uses: bridgecrewio/checkov-action@master
+        continue-on-error: true
         with:
           directory: terraform/
           framework: terraform
           output_format: cli, sarif
           output_file_path: console,results.sarif
-          soft_fail: true
-          continue-on-error: true
+          soft_fail: false
 
       - name: "Run Checkov Kubernetes"
         id: checkov-k8s
         uses: bridgecrewio/checkov-action@master
+        continue-on-error: true
         with:
           directory: kubernetes/
           framework: kubernetes
           output_format: cli, sarif
           output_file_path: console,k8s-results.sarif
-          soft_fail: true
-          continue-on-error: true
+          soft_fail: false
 
       - name: "Run Checkov Dockerfile"
         id: checkov-dockerfile
         uses: bridgecrewio/checkov-action@master
+        continue-on-error: true
         with:
           directory: dockerfile/
           framework: dockerfile
           output_format: cli, sarif
           output_file_path: console,dockerfile-results.sarif
-          soft_fail: true
-          continue-on-error: true
+          soft_fail: false
 
-      - name: "Upload SARIF ke GitHub Security tab"
+      - name: "Upload SARIF Terraform"
         uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
-          sarif_file: terraform/results.sarif
+          sarif_file: results.sarif
           category: "checkov-terraform"
 
+      - name: "Upload SARIF Kubernetes"
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: k8s-results.sarif
+          category: "checkov-kubernetes"
+
+      - name: "Upload SARIF Dockerfile"
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: dockerfile-results.sarif
+          category: "checkov-dockerfile"
+
       - name: "Block pipeline jika ditemukan pelanggaran di Terraform"
-        if: steps.checkov-terraform.outcome == 'failure'
+        if: always() && steps.checkov-terraform.outcome == 'failure'
         run: |
           echo "Checkov menemukan pelanggaran keamanan pada Terraform!"
-          echo "Periksa log job atau tab Security -> Code scanning untuk detail."
+          echo "Periksa tab Security -> Code scanning."
           exit 1
 
       - name: "Report sukses"
         if: steps.checkov-terraform.outcome == 'success'
         run: |
-          echo "Seluruh pemeriksaan Checkov pada Terraform PASSED!"
+          echo "Pemeriksaan Checkov Terraform PASSED!"
